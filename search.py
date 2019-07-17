@@ -1,38 +1,48 @@
 import unittest
 from selenium import webdriver
-import page
+from page import MainPage, SearchResultsPage
+import os
+
 
 class Search(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--ignore-certificate-errors')
         options.add_argument("--test-type")
-        options.add_extension("/Users/jessica/Downloads/google-access-helper.crx")
         self.driver = webdriver.Chrome(options=options)
         self.driver.get('https://images.wjbaike.site/imghp')
 
-    # Load the main page. In this case the home page of Google.
     def test_search_by_image(self):
-        main_page = page.MainPage(self.driver)
 
-    # Check google main page is indeed loaded.
+        main_page = MainPage(self.driver)
+
+        # Check google main page is indeed loaded.
         assert main_page.is_title_matches()
-    # Set the image to search
+
+        # Set the image to search
         main_page.click_image_button()
 
         image_url = 'http://i0.hdslb.com/bfs/article/3e914a016057a47ae4af8ee9ba33cd48f5294638.jpg'
-        image_content = ["dog", "puppy"]
-        main_page.input_imageurl_andgo(image_url)
+        image_content = ["dog", "puppy", "puppies"]
+        main_page.search_image_by_url(image_url)
 
-        search_results_page = page.SearchResultsPage(self.driver)
+        search_results_page = SearchResultsPage(self.driver)
 
-    # Verifies that the results return
+        # Verifies that the results return and results're related to image content
         assert search_results_page.is_results_found()
+        assert search_results_page.is_related_to(image_content)
 
-    # Visit the configurable result
-        VISIT_RESULT = 3
-        search_results_page.visit(VISIT_RESULT)
+        # Visit the configurable result
+        configuration_file = open("configuration_file", 'r')
+        line = configuration_file.readline().split("visit_result = ")
+        visit_result = int(line[1])
+        search_results_page.visit(visit_result)
+        configuration_file.close()
 
+        # Wait page to load and take screenshot
+        search_results_page.wait_page()
+        screenshot_file = os.path.join(os.path.curdir, 'third_result.png')
+        self.driver.find_element_by_xpath("//body").screenshot(screenshot_file)
 
     def tearDown(self):
         self.driver.close()
@@ -40,5 +50,3 @@ class Search(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
